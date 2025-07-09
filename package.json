@@ -24,8 +24,8 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./dist/index.d.ts",
-			"svelte": "./dist/index.js"
+			"types": "./dist/Circuit.svelte.d.ts",
+			"svelte": "./dist/Circuit.svelte"
 		}
 	},
 	"peerDependencies": {
