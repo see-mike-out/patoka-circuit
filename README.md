@@ -1,58 +1,144 @@
-# Svelte library
+# Patoka-Circuit
 
-Everything you need to build a Svelte library, powered by [`sv`](https://npmjs.com/package/sv).
+A Svelte library for quantum circuit visualization.
 
-Read more about creating a library [in the docs](https://svelte.dev/docs/kit/packaging).
+## Installation
 
-## Creating a project
+`npm install patoka-circuit`
 
-If you're seeing this, you've probably already done this step. Congrats!
+Note: it works within a Svelte environment.
 
-```bash
-# create a new project in the current directory
-npx sv create
+## Include a circuit
 
-# create a new project in my-app
-npx sv create my-app
+```svelte
+<script lang="ts">
+  import { Circuit } from "patoka-circuit";
+  let original_circuit = {
+    ...
+  };
+  let match_data = {
+    ...
+  };
+  let transpiled_circuit_0 = {
+    ...
+  };
+  let transpiled_circuit_1 = {
+    ...
+  };
+  let unit_id = "some_string";
+</script>
+<!-- have a `unit_id` (some string is good) -->
+<!-- Why? This is intended for Jupyter Notebook, without this info, your interactions might be corruped. -->
+<div id={"circuit-viewer-" + unit_id}>
+  ...
+  <!-- original -->
+  <Circuit
+    circuit_data={original_circuit}
+    is_original={true}
+    match={match_data}
+    id={"original"}
+    matched_circuit_id={["transpiled-0", "transpiled-1"]}
+    onClick={() => { ... }}
+    filter_unused_qubits={true}
+    {unit_id}
+  >
+  </Circuit>
+  <!-- transpiled/decomposed -->
+  <Circuit
+    circuit_data={transpiled_circuit_0}
+    is_original={true}
+    match={match_data}
+    id={"transpiled-0"}
+    matched_circuit_id={["original"]}
+    onClick={() => { ... }}
+    filter_unused_qubits={true}
+    {unit_id}
+  >
+  </Circuit>
+  <!-- can be mapped to multiple decomposed circuits -->
+  <Circuit
+    circuit_data={transpiled_circuit_1}
+    is_original={true}
+    match={match_data}
+    id={"transpiled-1"}
+    matched_circuit_id={["original"]}
+    onClick={() => { ... }}
+    filter_unused_qubits={true}
+    {unit_id}
+  >
+  </Circuit>
+  ...
+</div>
 ```
 
-## Developing
+For examples: go to `src/routes/+pages.svelte`
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### Types
 
-```bash
-npm run dev
+#### `circuit_data` --> `InitialCircuitData`
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+- `layers`: (required, `Array<InitialLayer>`) operations in layers (this is not figured out ahead—please use your circuit library)
+- `num_qubits`: (required, `number`) the number of qubits (of the machine for transpiled circuits)
+- `num_clbits`: (required, `number`) the number of classical bits
+- `qubits`: (required, `Array<InitialQubit>`) qubits (of the machine for transpiled circuits)
+- `clbits`: (required, `Array<InitialClibt>`) classical bits
+- `global_phase`: (optional, `number` or `null`) the global phase value (if any)
+
+#### `layer` --> `InitialLayer`
+
+- `num_op`: (required, `number`) the number of the operations in a layer
+- `operations`: (required, `Array<InitialGateOperation>`) the operations in a layer
+
+#### `operation` --> `InitialGateOperation`
+
+- `gate`: (required, `string`) the name of the gate (see below for the preset gates, but it also support random custom gates)
+- `num_qubits`: (required, `number`) the number of the qubits for this operation
+- `num_clbits`: (required, `number`) the number of the classical bits for this operation (e.g., for measurement)
+- `params`: (required, `Array<number>`) the parameters for this operation (if none, provide an empty array)
+- `qubits`: (required, `Array<RegisteredQubit>`) the qubits for this operation
+- `clbits`: (required, `Array<RegisteredClbit>`) the classical bits for this operation
+
+#### `qubit` and `clbit` --> `RegisteredQubit` and `RegisteredClbit`
+
+They have the same structure:
+
+- `register`: (required) the register of qubits/classical bits,
+  - `name`: (required, `string`) the name of the register
+  - `size`: (required, `number`) the total number of the qubits/classical bits in the register
+- `index`: (required, `number`) the index of this qubit/classical bit
+
+#### Notes
+
+**if you haven't specified `num_qubits`, `num_clbits`, `num_op`, etc., import `validateCircuitData` function.**
+
+```ts
+import { validateCircuitData } from "patoka-circuit";
+
+let compiled = validateCircuitData(partial);
 ```
 
-Everything inside `src/lib` is part of your library, everything inside `src/routes` can be used as a showcase or preview app.
+#### Saving the circuit visualization as an image file
 
-## Building
+```ts
+import { getSVGimageLink } from "patoka-circuit";
+import type { Writable } from "svelte/store";
 
-To build your library:
+let loader: Writable = writable(); // for reactivity
 
-```bash
-npm run package
+// for `id` and `unit_id`, see above
+getSVGimageLink(unit_id, id, loader).then((loaded) => {
+  ...
+}); 
 ```
 
-To create a production version of your showcase app:
+The `loader` object consists of:
 
-```bash
-npm run build
-```
+- `id` (`string`): the id of the SVG
+- `png` (`string`): the URL for the PNG image (Blob)
+- `svg` (`string`): the URL for the SVG image (Blob)
 
-You can preview the production build with `npm run preview`.
+Once you get this information, set it to the `href` of an `<A>` object.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## For developers
 
-## Publishing
-
-Go into the `package.json` and give your package the desired name through the `"name"` option. Also consider adding a `"license"` field and point it to a `LICENSE` file which you can create from a template (one popular option is the [MIT license](https://opensource.org/license/mit/)).
-
-To publish your library to [npm](https://www.npmjs.com):
-
-```bash
-npm publish
-```
+Please Fork and Pull Request.
